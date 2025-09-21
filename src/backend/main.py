@@ -1,6 +1,6 @@
 """
 PR Review Agent Backend - FastAPI Application
-This is a reference implementation for the Python backend.
+Professional code review automation system.
 Copy this to a separate Python project to run the backend.
 """
 

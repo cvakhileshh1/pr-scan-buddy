@@ -43,7 +43,7 @@ const PRAnalyzer = () => {
     setIsAnalyzing(true);
     
     try {
-      // Mock API call - replace with actual backend endpoint
+      // Call the actual backend API
       const response = await fetch('/api/analyze-pr', {
         method: 'POST',
         headers: {
@@ -56,7 +56,7 @@ const PRAnalyzer = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Analysis failed');
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -67,51 +67,16 @@ const PRAnalyzer = () => {
         description: `PR analyzed successfully with a score of ${result.score}/100`,
       });
     } catch (error) {
-      // Mock data for demo purposes
-      const mockResult: PRAnalysisResult = {
-        score: 85,
-        feedback: [
-          {
-            file: "src/auth.py",
-            line: 23,
-            type: "warning",
-            message: "Consider using environment variables for sensitive configuration",
-            severity: 3
-          },
-          {
-            file: "src/models.py",
-            line: 45,
-            type: "suggestion",
-            message: "Add docstring to improve code documentation",
-            severity: 2
-          },
-          {
-            file: "src/api.py",
-            line: 12,
-            type: "error",
-            message: "Potential SQL injection vulnerability detected",
-            severity: 5
-          },
-          {
-            file: "src/utils.py",
-            line: 67,
-            type: "info",
-            message: "Consider using type hints for better code clarity",
-            severity: 1
-          }
-        ],
-        summary: "Overall good code quality with some security concerns that need attention. The PR introduces new authentication features with proper error handling.",
-        filesChanged: 4,
-        linesAdded: 156,
-        linesRemoved: 23
-      };
-      
-      setAnalysisResult(mockResult);
+      console.error('Analysis failed:', error);
       
       toast({
-        title: "Demo Mode",
-        description: "Showing mock analysis results for demonstration",
+        title: "Analysis Failed",
+        description: "Backend service unavailable. Please ensure the Python backend is running on port 8000.",
+        variant: "destructive",
       });
+      
+      // Clear any previous results and don't show fake data
+      setAnalysisResult(null);
     } finally {
       setIsAnalyzing(false);
     }
@@ -130,7 +95,7 @@ const PRAnalyzer = () => {
     }
   };
 
-  const getFeedbackBadgeVariant = (type: string) => {
+  const getFeedbackBadgeVariant = (type: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (type) {
       case 'error':
         return 'destructive';
@@ -213,7 +178,7 @@ const PRAnalyzer = () => {
         </Button>
       </Card>
 
-      {/* Analysis Results */}
+      {/* Analysis Results - Only show when we have actual results */}
       {analysisResult && (
         <div className="space-y-6">
           {/* Summary Card */}
@@ -298,6 +263,20 @@ const PRAnalyzer = () => {
             </div>
           </Card>
         </div>
+      )}
+
+      {/* Instructions when no results */}
+      {!analysisResult && !isAnalyzing && (
+        <Card className="p-8 bg-gradient-to-br from-card to-card/50 border-border text-center">
+          <div className="space-y-4">
+            <Code className="w-16 h-16 mx-auto text-muted-foreground" />
+            <h3 className="text-xl font-semibold">Ready to Analyze</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Enter a repository URL and PR number above, then click "Analyze Pull Request" to get started.
+              Make sure your Python backend is running on port 8000.
+            </p>
+          </div>
+        </Card>
       )}
     </div>
   );
