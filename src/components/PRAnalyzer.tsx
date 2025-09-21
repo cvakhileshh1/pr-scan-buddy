@@ -43,7 +43,7 @@ const PRAnalyzer = () => {
     setIsAnalyzing(true);
     
     try {
-      // Call the actual backend API
+      // Try to call the actual backend API first
       const response = await fetch('/api/analyze-pr', {
         method: 'POST',
         headers: {
@@ -55,28 +55,70 @@ const PRAnalyzer = () => {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (response.ok) {
+        const result = await response.json();
+        setAnalysisResult(result);
+        
+        toast({
+          title: "Analysis Complete",
+          description: `PR analyzed successfully with a score of ${result.score}/100`,
+        });
+      } else {
+        throw new Error('Backend not available');
       }
-
-      const result = await response.json();
-      setAnalysisResult(result);
-      
-      toast({
-        title: "Analysis Complete",
-        description: `PR analyzed successfully with a score of ${result.score}/100`,
-      });
     } catch (error) {
-      console.error('Analysis failed:', error);
+      // Demo mode - simulate analysis for demonstration
+      console.log('Backend not available, running demo analysis...');
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Generate demo analysis based on the actual repo URL
+      const demoResult: PRAnalysisResult = {
+        score: Math.floor(Math.random() * 20) + 75, // Score between 75-95
+        feedback: [
+          {
+            file: "README.md",
+            line: 1,
+            type: "info",
+            message: "Documentation looks good, consider adding installation instructions",
+            severity: 1
+          },
+          {
+            file: "src/main.py",
+            line: 45,
+            type: "warning",
+            message: "Consider adding type hints for better code clarity",
+            severity: 2
+          },
+          {
+            file: "config.py",
+            line: 12,
+            type: "suggestion",
+            message: "Environment variables should be used for configuration",
+            severity: 3
+          },
+          {
+            file: "api/routes.py",
+            line: 23,
+            type: "error",
+            message: "Potential security issue: validate user input",
+            severity: 4
+          }
+        ],
+        summary: `Demo analysis of repository: ${repoUrl}. This is a simulated review showing how the system would analyze your pull request. The actual analysis would examine real code changes, security vulnerabilities, and coding standards.`,
+        filesChanged: 4,
+        linesAdded: Math.floor(Math.random() * 100) + 50,
+        linesRemoved: Math.floor(Math.random() * 30) + 10
+      };
+      
+      setAnalysisResult(demoResult);
       
       toast({
-        title: "Analysis Failed",
-        description: "Backend service unavailable. Please ensure the Python backend is running on port 8000.",
-        variant: "destructive",
+        title: "Demo Analysis Complete",
+        description: "Showing simulated results. Connect Python backend for real analysis.",
+        variant: "default",
       });
-      
-      // Clear any previous results and don't show fake data
-      setAnalysisResult(null);
     } finally {
       setIsAnalyzing(false);
     }
@@ -270,11 +312,12 @@ const PRAnalyzer = () => {
         <Card className="p-8 bg-gradient-to-br from-card to-card/50 border-border text-center">
           <div className="space-y-4">
             <Code className="w-16 h-16 mx-auto text-muted-foreground" />
-            <h3 className="text-xl font-semibold">Ready to Analyze</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Enter a repository URL and PR number above, then click "Analyze Pull Request" to get started.
-              Make sure your Python backend is running on port 8000.
-            </p>
+            <h3 className="text-xl font-semibold">Ready to Analyze Your PR</h3>
+            <div className="text-muted-foreground max-w-md mx-auto space-y-2">
+              <p>Enter a repository URL and PR number above, then click "Analyze Pull Request".</p>
+              <p className="text-sm">💡 <strong>Demo Mode:</strong> Works without backend - shows simulated analysis for testing the interface.</p>
+              <p className="text-sm">🔧 <strong>Production:</strong> Set up the Python backend for real PR analysis.</p>
+            </div>
           </div>
         </Card>
       )}
